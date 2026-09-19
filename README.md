@@ -33,8 +33,19 @@ the **view layer**, which is what actually takes effect — the same value set o
 | 超宽 Extra wide | 78rem |
 | 自定义 Custom | 36–96rem, slider |
 
+![Choosing a line-width preset](docs/shot-presets.png)
+
+The settings page previews the width as a proportional bar rather than at its
+real pixel size — the settings pane is always narrower than the reading pane, so
+a true-size preview would have looked identical on every preset:
+
+![Width preview in settings](docs/shot-settings.png)
+
 Width and spacing are independent: you can narrow the column without turning
 on dense spacing, which is the common case for tables and code.
+
+![Dense reading in the reading view](docs/shot-reading.png)
+
 
 ## Per-note width
 
