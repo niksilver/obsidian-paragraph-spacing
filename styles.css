@@ -151,7 +151,29 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
   border-bottom: 1px dashed var(--background-modifier-border);
 }
 
-/* 预览块本身不设死宽度，只给 max-width，这样窄档位能看出收敛效果。 */
+/* 标尺：一条横条，宽度 = 当前档位在 44–96rem 区间里的相对位置。
+   为什么需要它：真实行宽（44–96rem）全部超出设置页宽度，
+   光看预览块本身会「每档都一样宽」，标尺把差异显式画出来。 */
+.dr-preview-ruler {
+  position: relative;
+  height: 4px;
+  margin: 0 auto 0.9em;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+}
+
+.dr-preview-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--interactive-accent);
+  transition: width 120ms ease-out;
+}
+
+/* 预览块本身不设死宽度，只给 max-width（由 JS 按比例设百分比），
+   这样窄档位能看出收敛效果。 */
 .dr-preview-sample {
   padding: 0.6em 0.9em;
   border-radius: 6px;
@@ -159,6 +181,14 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
   color: var(--text-normal);
   font-size: 0.95em;
   line-height: 1.7;
+  transition: max-width 120ms ease-out;
+}
+
+.dr-preview-readout {
+  margin-top: 0.7em;
+  color: var(--text-faint, var(--text-muted));
+  font-size: var(--font-ui-smaller, 0.9em);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---- 页脚：版本 / 仓库信息 ---- */
@@ -214,27 +244,21 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
   line-height: 1.55;
 }
 
-.sp-grid {
+/* 单一入口（GitHub Sponsors）。做成一行链接，
+   不再有国内 / 海外分列 —— 见 sponsor.js 顶部注释。 */
+.sp-row {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5em;
 }
 
-.sp-col-head {
-  margin-bottom: 0.25em;
-  color: var(--text-faint);
-  font-size: 0.8em;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.sp-col a.sp-link {
+.sp-row a.sp-link {
   display: block;
   padding: 0.15em 0;
   color: var(--text-accent);
   text-decoration: none;
 }
 
-.sp-col a.sp-link:hover {
+.sp-row a.sp-link:hover {
   text-decoration: underline;
 }

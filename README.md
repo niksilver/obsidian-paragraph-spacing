@@ -36,8 +36,6 @@ the **view layer**, which is what actually takes effect — the same value set o
 Width and spacing are independent: you can narrow the column without turning
 on dense spacing, which is the common case for tables and code.
 
-![Line width preview in settings](docs/shot-settings.png)
-
 ## Per-note width
 
 A single global width is rarely right for every note. Readings sit well
