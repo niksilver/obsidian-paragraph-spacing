@@ -27,6 +27,8 @@
 "use strict";
 
 const { Plugin, PluginSettingTab, Setting, Notice } = require("obsidian");
+const { bindI18n } = require("./i18n");
+const { renderSponsor } = require("./sponsor");
 
 /* ---------------------------------------------------------------- 常量 */
 
@@ -35,13 +37,14 @@ const MODE_CLASS = "dense-reading-mode";
 
 /** 档位表：值是 rem 数；null 表示「自定义」，另取 settings.customWidth。
  *  `cls` 是它对应的 body class —— 显式写出来而不是靠字符串拼，
- *  因为 "custom" 这种档位名一旦去拼就会拼成 `dense-wustom`。 */
+ *  因为 "custom" 这种档位名一旦去拼就会拼成 `dense-wustom`。
+ *  `key` 是显示名的 i18n 键，语言切换后标签跟着变，class 与 id 永不随语言变。 */
 const PRESETS = [
-  { id: "w44", label: "窄读", rem: 44, cls: "dense-w44" },
-  { id: "w54", label: "均衡", rem: 54, cls: "dense-w54" },
-  { id: "w66", label: "宽幅", rem: 66, cls: "dense-w66" },
-  { id: "w78", label: "超宽", rem: 78, cls: "dense-w78" },
-  { id: "custom", label: "自定义", rem: null, cls: "dense-w-custom" },
+  { id: "w44", key: "preset.w44", rem: 44, cls: "dense-w44" },
+  { id: "w54", key: "preset.w54", rem: 54, cls: "dense-w54" },
+  { id: "w66", key: "preset.w66", rem: 66, cls: "dense-w66" },
+  { id: "w78", key: "preset.w78", rem: 78, cls: "dense-w78" },
+  { id: "custom", key: "preset.custom", rem: null, cls: "dense-w-custom" },
 ];
 
 /** 档位 id → body class。唯一入口，避免在多处重复拼接逻辑。 */
@@ -61,6 +64,8 @@ const DEFAULT_SETTINGS = {
   rememberPerNote: true,
   /** 每篇笔记的档位覆盖：{ "path/to/note.md": "w66" }。 */
   perNote: {},
+  /** 界面语言：auto / zh / en（见 i18n.js）。 */
+  language: "auto",
 };
 
 /* ---------------------------------------------------------------- 主插件 */
@@ -76,35 +81,45 @@ class DenseReadingPlugin extends Plugin {
     // 首次加载：把状态落到 body 上。
     this.applyClasses();
 
+    bindI18n(this);
+
     this.addSettingTab(new DenseReadingSettingTab(this.app, this));
+
+    const t = (k, v) => this.i18n.t(k, v);
 
     this.addCommand({
       id: "toggle-dense-mode",
-      name: "切换密排阅读",
+      name: t("command.toggle"),
       callback: async () => {
         this.settings.denseMode = !this.settings.denseMode;
         await this.saveSettings();
         this.applyClasses();
-        new Notice(this.settings.denseMode ? "密排阅读：开" : "密排阅读：关");
+        new Notice(
+          this.i18n.t(this.settings.denseMode ? "notice.mode.on" : "notice.mode.off")
+        );
       },
     });
 
     this.addCommand({
       id: "cycle-width",
-      name: "循环切换行宽档位",
+      name: t("command.cycle"),
       callback: async () => {
         const ids = PRESETS.map((p) => p.id);
         const at = ids.indexOf(this.settings.widthPreset);
         this.settings.widthPreset = ids[(at + 1) % ids.length];
         await this.saveSettings();
         this.applyClasses();
-        new Notice(`行宽：${this.presetLabel(this.settings.widthPreset)}`);
+        new Notice(
+          this.i18n.t("notice.width", {
+            label: this.presetLabel(this.settings.widthPreset),
+          })
+        );
       },
     });
 
     this.addCommand({
       id: "set-width-for-note",
-      name: "为当前笔记固定行宽档位",
+      name: t("command.pin"),
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== "md") return false;
@@ -115,7 +130,7 @@ class DenseReadingPlugin extends Plugin {
 
     this.addCommand({
       id: "clear-width-for-note",
-      name: "清除当前笔记的行宽档位",
+      name: t("command.unpin"),
       checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
         if (!file || !(file.path in this.settings.perNote)) return false;
@@ -152,7 +167,10 @@ class DenseReadingPlugin extends Plugin {
   presetLabel(id) {
     const p = PRESETS.find((x) => x.id === id);
     if (!p) return id;
-    return p.rem === null ? `${p.label}（${this.settings.customWidth}rem）` : `${p.label}（${p.rem}rem）`;
+    const name = this.i18n.t(p.key);
+    return p.rem === null
+      ? `${name}（${this.settings.customWidth}rem）`
+      : `${name}（${p.rem}rem）`;
   }
 
   /** 当前笔记若固定过档位，返回它；否则返回全局档位。 */
@@ -225,7 +243,9 @@ class DenseReadingPlugin extends Plugin {
     this.settings.perNote[path] = id;
     await this.saveSettings();
     this.applyClasses();
-    new Notice(`已固定为「${this.presetLabel(id)}」：${path}`);
+    new Notice(
+      this.i18n.t("notice.pinned", { label: this.presetLabel(id), path })
+    );
   }
 
   async clearNotePin(path) {
@@ -233,7 +253,7 @@ class DenseReadingPlugin extends Plugin {
       delete this.settings.perNote[path];
       await this.saveSettings();
       this.applyClasses();
-      new Notice("已清除该笔记的档位固定");
+      new Notice(this.i18n.t("notice.unpinned"));
     }
   }
 }
@@ -248,32 +268,46 @@ class DenseReadingSettingTab extends PluginSettingTab {
 
   display() {
     const { containerEl } = this;
+    const t = (k, v) => this.plugin.i18n.t(k, v);
     containerEl.empty();
     containerEl.createEl("h3", { text: "Dense Reading" });
 
-    containerEl.createDiv({ cls: "dr-usage" }, (el) => {
-      el.createEl("p", {
-        text:
-          "行宽按「视图层」生效，不受总开关影响；间距只在总开关打开时作用。" +
-          "两者都与原来的 dense-reading.css 片段同名，可平滑迁移。",
+    new Setting(containerEl)
+      .setName(t("settings.language.name"))
+      .setDesc(t("settings.language.desc"))
+      .addDropdown((drop) => {
+        for (const opt of this.plugin.i18n.options) {
+          drop.addOption(opt.id, opt.label);
+        }
+        drop.setValue(this.plugin.settings.language || "auto").onChange(
+          async (v) => {
+            this.plugin.settings.language = v;
+            await this.plugin.saveSettings();
+            this.display();
+          }
+        );
       });
+
+    containerEl.createDiv({ cls: "dr-usage" }, (el) => {
+      el.createEl("p", { text: t("settings.usage") });
     });
 
     new Setting(containerEl)
-      .setName("密排阅读总开关")
-      .setDesc("收紧密排阅读视图的段落与标题间距。关闭时除行宽外零生效。")
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.denseMode).onChange((v) => {
+      .setName(t("settings.mode.name"))
+      .setDesc(t("settings.mode.desc"))
+      .addToggle((tg) =>
+        tg.setValue(this.plugin.settings.denseMode).onChange((v) => {
           void this.plugin.setDenseMode(v);
         })
       );
 
     new Setting(containerEl)
-      .setName("行宽档位")
-      .setDesc("覆盖主题的可读行宽。与总开关互相独立。")
+      .setName(t("settings.width.name"))
+      .setDesc(t("settings.width.desc"))
       .addDropdown((drop) => {
         for (const p of PRESETS) {
-          drop.addOption(p.id, p.rem === null ? p.label : `${p.label} ${p.rem}rem`);
+          const name = t(p.key);
+          drop.addOption(p.id, p.rem === null ? name : `${name} ${p.rem}rem`);
         }
         drop.setValue(this.plugin.settings.widthPreset).onChange((v) => {
           void this.plugin.setPreset(v);
@@ -282,8 +316,8 @@ class DenseReadingSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName("自定义行宽")
-      .setDesc("仅在行宽档位选「自定义」时生效（36–96rem）")
+      .setName(t("settings.custom.name"))
+      .setDesc(t("settings.custom.desc"))
       .addSlider((s) =>
         s
           .setLimits(36, 96, 0.5)
@@ -296,10 +330,10 @@ class DenseReadingSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("按笔记记住档位")
-      .setDesc("每篇笔记可以固定自己的档位，切换笔记时自动套用。")
-      .addToggle((t) =>
-        t.setValue(this.plugin.settings.rememberPerNote).onChange((v) => {
+      .setName(t("settings.perNote.name"))
+      .setDesc(t("settings.perNote.desc"))
+      .addToggle((tg) =>
+        tg.setValue(this.plugin.settings.rememberPerNote).onChange((v) => {
           void (async () => {
             this.plugin.settings.rememberPerNote = v;
             await this.plugin.saveSettings();
@@ -314,32 +348,78 @@ class DenseReadingSettingTab extends PluginSettingTab {
       const box = containerEl.createDiv({ cls: "dr-pinned" });
       box.createEl("div", {
         cls: "dr-pinned-title",
-        text: pinned.length ? `已固定档位的笔记（${pinned.length}）` : "还没有固定过档位的笔记",
+        text: pinned.length
+          ? t("settings.pinned.title", { n: pinned.length })
+          : t("settings.pinned.empty"),
       });
       for (const path of pinned.slice(0, 12)) {
         const row = box.createDiv({ cls: "dr-pinned-row" });
         row.createSpan({ text: path });
-        row.createEl("button", { text: "清除" }).addEventListener("click", () => {
-          void (async () => {
-            await this.plugin.clearNotePin(path);
-            this.display();
-          })();
-        });
+        row
+          .createEl("button", { text: t("common.clear") })
+          .addEventListener("click", () => {
+            void (async () => {
+              await this.plugin.clearNotePin(path);
+              this.display();
+            })();
+          });
       }
       if (pinned.length > 12) {
-        box.createEl("div", { cls: "dr-pinned-more", text: `…另外 ${pinned.length - 12} 条` });
+        box.createEl("div", {
+          cls: "dr-pinned-more",
+          text: t("settings.pinned.more", { n: pinned.length - 12 }),
+        });
       }
     }
 
     // 实时预览：改滑条时立刻看到宽度变化，不用来回切笔记试。
     this.previewEl = containerEl.createDiv({ cls: "dr-preview" });
-    this.previewEl.createEl("div", { cls: "dr-preview-label", text: "行宽预览" });
+    this.previewEl.createEl("div", {
+      cls: "dr-preview-label",
+      text: t("settings.preview.label"),
+    });
     const stage = this.previewEl.createDiv({ cls: "dr-preview-stage" });
     this.sampleEl = stage.createDiv({ cls: "dr-preview-sample" });
-    this.sampleEl.setText(
-      "阅读行宽决定了眼睛每行的移动距离。窄一点更专注，宽一点更适合表格与代码。"
-    );
+    this.sampleEl.setText(t("settings.preview.sample"));
     this.updatePreview();
+
+    new Setting(containerEl)
+      .setName(t("settings.reset.name"))
+      .setDesc(t("settings.reset.desc"))
+      .addButton((b) =>
+        b.setButtonText(t("common.reset")).onClick(async () => {
+          // 语言是「这一页本身」的偏好，恢复默认时刻意保留，
+          // 否则中文用户点一下按钮界面就变成英文了。
+          const keepLang = this.plugin.settings.language;
+          this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS, {
+            perNote: {},
+            language: keepLang,
+          });
+          await this.plugin.saveSettings();
+          this.plugin.applyClasses();
+          new Notice(t("common.reset.done"));
+          this.display();
+        })
+      );
+
+    this.renderFooter(containerEl, t);
+  }
+
+  /** 版本 + 仓库 + 赞助。四个插件共用同一套结构与文案。 */
+  renderFooter(containerEl, t) {
+    const wrap = containerEl.createDiv({ cls: "dr-about" });
+
+    const meta = wrap.createDiv({ cls: "dr-about-meta" });
+    meta.createSpan({ text: `${t("meta.version")} ${this.plugin.manifest.version}` });
+    meta.createSpan({ cls: "dr-about-sep", text: "·" });
+    const repo = meta.createEl("a", {
+      text: this.plugin.manifest.id,
+      href: `https://github.com/yunmin311/${this.plugin.manifest.id}-obsidian`,
+    });
+    repo.setAttr("target", "_blank");
+    repo.setAttr("rel", "noopener");
+
+    renderSponsor(wrap, t);
   }
 
   updatePreview() {

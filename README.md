@@ -82,6 +82,16 @@ names are deliberately identical (`dense-w44` … `dense-w-custom`,
 3. The snippet can stay enabled (the rules are the same, so they cannot
    conflict) or be disabled, since `styles.css` now carries them.
 
+## Language
+
+The settings page, commands and every notice are available in **Chinese and
+English**. Pick a language at the top of the settings page: `Auto` follows
+Obsidian's own language, or pin it to `简体中文` / `English` explicitly.
+
+Adding another language is a pure data change — an extra entry in
+`locales.js` — with no build step involved. Preset ids and CSS class names stay
+language-independent, so switching language never changes what is applied.
+
 ## Privacy
 
 No network access. No telemetry. No accounts. The plugin reads the path of the
