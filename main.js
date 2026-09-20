@@ -94,14 +94,10 @@ const OWN = {
 
     "command.toggle": "Toggle dense reading",
     "command.cycle": "Cycle line-width preset",
-    "command.pin": "Pin line width for this note",
-    "command.unpin": "Clear line width for this note",
 
     "notice.mode.on": "Dense reading: on",
     "notice.mode.off": "Dense reading: off",
     "notice.width": "Line width: {label}",
-    "notice.pinned": 'Pinned to "{label}": {path}',
-    "notice.unpinned": "This note's pinned width was cleared",
 
     "preset.w44": "Narrow",
     "preset.w54": "Balanced",
@@ -123,21 +119,13 @@ const OWN = {
     "settings.custom.name": "Custom line width",
     "settings.custom.desc": "Only used when the preset above is set to Custom (36–96rem).",
 
-    "settings.perNote.name": "Remember width per note",
-    "settings.perNote.desc":
-      "Each note can pin its own preset, applied automatically when you switch to it.",
-
-    "settings.pinned.title": "Notes with a pinned preset ({n})",
-    "settings.pinned.empty": "No note has a pinned preset yet",
-    "settings.pinned.more": "…and {n} more",
-
     "settings.preview.label": "Width preview",
     "settings.preview.sample":
       "Line width sets how far the eye travels per line. Narrower reads more focused; wider suits tables and code.",
 
     "settings.reset.name": "Restore defaults",
     "settings.reset.desc":
-      "Clear the master switch, the preset and every per-note pin back to their initial values.",
+      "Clear the master switch and the preset back to their initial values.",
   },
 };
 const LOCALES = buildLocales();
@@ -320,9 +308,6 @@ const DEFAULT_SETTINGS = {
   /* The number of rem to customize the scale (36–96, consistent with the
      clip's slider range).  */
   customWidth: 54,
-  /* When opening a new note, should the note's saved settings be
-     automatically applied?  */
-  rememberPerNote: true,
   /* Tier coverage for each note: { "path/to/note.md": "w66" }.  */
   perNote: {},
   /* Interface language: auto / zh / en (see i18n.js).  */
@@ -335,9 +320,6 @@ class DenseReadingPlugin extends Plugin {
   async onload() {
     const saved = (await this.loadData()) || {};
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
-    if (typeof this.settings.perNote !== "object" || this.settings.perNote === null) {
-      this.settings.perNote = {};
-    }
 
     // Initial load: Persist the state to the `body`.
     this.applyClasses();
@@ -378,28 +360,6 @@ class DenseReadingPlugin extends Plugin {
       },
     });
 
-    this.addCommand({
-      id: "set-width-for-note",
-      name: t("command.pin"),
-      checkCallback: (checking) => {
-        const file = this.app.workspace.getActiveFile();
-        if (!file || file.extension !== "md") return false;
-        if (!checking) void this.pinCurrentNote(file.path);
-        return true;
-      },
-    });
-
-    this.addCommand({
-      id: "clear-width-for-note",
-      name: t("command.unpin"),
-      checkCallback: (checking) => {
-        const file = this.app.workspace.getActiveFile();
-        if (!file || !(file.path in this.settings.perNote)) return false;
-        if (!checking) void this.clearNotePin(file.path);
-        return true;
-      },
-    });
-
     // When switching notes, apply that note's specific setting (if available).
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
@@ -435,28 +395,12 @@ class DenseReadingPlugin extends Plugin {
       : `${name}（${p.rem}rem）`;
   }
 
-  /* If the current note has a fixed slot assigned, return it;
-     otherwise, return the global slot.  */
-  effectivePreset() {
-    if (!this.settings.rememberPerNote) return this.settings.widthPreset;
-    try {
-      const file = this.app.workspace.getActiveFile();
-      if (file && file.extension === "md") {
-        const pinned = this.settings.perNote[file.path];
-        if (pinned && PRESETS.some((p) => p.id === pinned)) return pinned;
-      }
-    } catch {
-      /* If the event file cannot be retrieved, use the global value.  */
-    }
-    return this.settings.widthPreset;
-  }
-
   /* Writing the two-dimensional state as a body class—this is the only
      place where the plugin actually "does" anything.*/
   applyClasses() {
     const body = document.body;
     if (!body) return;
-    const preset = this.effectivePreset() || "w54";
+    const preset = this.settings.widthPreset || "w54";
     const widthClass = classForPreset(preset);
 
     try {
@@ -501,26 +445,6 @@ class DenseReadingPlugin extends Plugin {
     this.settings.customWidth = this.clampWidth(rem);
     await this.saveSettings();
     this.applyClasses();
-  }
-
-  /* Pin the current setting to a specific note.  */
-  async pinCurrentNote(path) {
-    const id = this.effectivePreset();
-    this.settings.perNote[path] = id;
-    await this.saveSettings();
-    this.applyClasses();
-    new Notice(
-      this.i18n.t("notice.pinned", { label: this.presetLabel(id), path })
-    );
-  }
-
-  async clearNotePin(path) {
-    if (path in this.settings.perNote) {
-      delete this.settings.perNote[path];
-      await this.saveSettings();
-      this.applyClasses();
-      new Notice(this.i18n.t("notice.unpinned"));
-    }
   }
 }
 
@@ -594,49 +518,6 @@ class DenseReadingSettingTab extends PluginSettingTab {
             this.updatePreview();
           })
       );
-
-    new Setting(containerEl)
-      .setName(t("settings.perNote.name"))
-      .setDesc(t("settings.perNote.desc"))
-      .addToggle((tg) =>
-        tg.setValue(this.plugin.settings.rememberPerNote).onChange((v) => {
-          void (async () => {
-            this.plugin.settings.rememberPerNote = v;
-            await this.plugin.saveSettings();
-            this.plugin.applyClasses();
-            this.display();
-          })();
-        })
-      );
-
-    if (this.plugin.settings.rememberPerNote) {
-      const pinned = Object.keys(this.plugin.settings.perNote);
-      const box = containerEl.createDiv({ cls: "dr-pinned" });
-      box.createEl("div", {
-        cls: "dr-pinned-title",
-        text: pinned.length
-          ? t("settings.pinned.title", { n: pinned.length })
-          : t("settings.pinned.empty"),
-      });
-      for (const path of pinned.slice(0, 12)) {
-        const row = box.createDiv({ cls: "dr-pinned-row" });
-        row.createSpan({ text: path });
-        row
-          .createEl("button", { text: t("common.clear") })
-          .addEventListener("click", () => {
-            void (async () => {
-              await this.plugin.clearNotePin(path);
-              this.display();
-            })();
-          });
-      }
-      if (pinned.length > 12) {
-        box.createEl("div", {
-          cls: "dr-pinned-more",
-          text: t("settings.pinned.more", { n: pinned.length - 12 }),
-        });
-      }
-    }
 
     /* Real-time preview: See width changes immediately when adjusting
        the slider, without needing to switch back and forth to test.
