@@ -15,20 +15,6 @@
    ============================================================ */
 
 /* ------------------------------------------------------------
-   Line width settings: Modifies theme variables only; takes effect
-   independently of the master toggle.  Note: Must be defined at the view level
-   (matching the scope of the `border-polished` override logic); defining it
-   on the `body` element would result in it being overridden by Obsidian's
-   inline `--file-line-width: 700px` style.  Selector specificity (0,4,1) >
-   `border-polished`'s (0,2,0), ensuring reliable application.
-   ------------------------------------------------------------ */
-body.dense-w44 :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: 44rem; }
-body.dense-w54 :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: 54rem; }
-body.dense-w66 :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: 66rem; }
-body.dense-w78 :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: 78rem; }
-body.dense-w-custom :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: var(--dense-width-value, 54rem); }
-
-/* ------------------------------------------------------------
    When the master switch is on: Compact layout in Reading View
    (Affects only .markdown-preview-view / .markdown-rendered;
    does not alter the editing structure of Live Preview)
@@ -105,101 +91,7 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
   line-height: 1.55;
 }
 
-.dr-pinned {
-  margin: 0.5em 0 1.25em;
-  padding: 0.75em 1em;
-  border-radius: 4px;
-  background: var(--background-secondary);
-}
-
-.dr-pinned-title {
-  margin-bottom: 0.5em;
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 0.9em);
-}
-
-.dr-pinned-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75em;
-  padding: 0.2em 0;
-  font-size: var(--font-ui-smaller, 0.9em);
-}
-
-.dr-pinned-row span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dr-pinned-more {
-  margin-top: 0.4em;
-  color: var(--text-faint);
-  font-size: var(--font-ui-smaller, 0.9em);
-}
-
-.dr-preview {
-  margin-top: 1.5em;
-  padding: 1em;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  background: var(--background-primary);
-}
-
-.dr-preview-label {
-  margin-bottom: 0.75em;
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 0.9em);
-}
-
-.dr-preview-stage {
-  padding: 1em 0;
-  border-top: 1px dashed var(--background-modifier-border);
-  border-bottom: 1px dashed var(--background-modifier-border);
-}
-
-/* 标尺：一条横条，宽度 = 当前档位在 44–96rem 区间里的相对位置。
-   为什么需要它：真实行宽（44–96rem）全部超出设置页宽度，
-   光看预览块本身会「每档都一样宽」，标尺把差异显式画出来。 */
-.dr-preview-ruler {
-  position: relative;
-  height: 4px;
-  margin: 0 auto 0.9em;
-  width: 100%;
-  border-radius: 2px;
-  background: var(--background-modifier-border);
-}
-
-.dr-preview-bar {
-  position: absolute;
-  inset: 0 auto 0 0;
-  height: 100%;
-  border-radius: 2px;
-  background: var(--interactive-accent);
-  transition: width 120ms ease-out;
-}
-
-/* 预览块本身不设死宽度，只给 max-width（由 JS 按比例设百分比），
-   这样窄档位能看出收敛效果。 */
-.dr-preview-sample {
-  padding: 0.6em 0.9em;
-  border-radius: 6px;
-  background: var(--background-secondary);
-  color: var(--text-normal);
-  font-size: 0.95em;
-  line-height: 1.7;
-  transition: max-width 120ms ease-out;
-}
-
-.dr-preview-readout {
-  margin-top: 0.7em;
-  color: var(--text-faint, var(--text-muted));
-  font-size: var(--font-ui-smaller, 0.9em);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---- 页脚：版本 / 仓库信息 ---- */
+/* ---- Footer: Version / Repository Information --- */
 
 .dr-about {
   margin-top: 2em;
