@@ -1,21 +1,26 @@
 /* ============================================================
-   Dense Reading（密排阅读）— 插件版样式
+   Dense Reading - Plugin-style
    ------------------------------------------------------------
-   与原来的 dense-reading.css 片段内容等价，类名完全一致：
-   插件只负责「往 body 上挂 / 摘 class」，样式仍由 CSS 承担。
-   这样两套可以共存，用户迁移时不会出现「插件装好了但样式没了」。
+   Equivalent to the content of the original `dense-reading.css` snippet, with
+   identical class names: The plugin is solely responsible for toggling the
+   class on the `body` element, while the styling remains handled by CSS.
+   This allows both approaches to coexist, ensuring that users do not
+   experience a loss of styling upon migration.
 
-   沿用原片段的三条约束：
-   - 不写死任何颜色，一律 currentColor / 主题变量
-   - 所有间距规则包在 body.dense-reading-mode 下，关闭时零生效
-   - 行宽档位独立于总开关，单独生效
+  Adheres to the three constraints of the original snippet:
+  - No hardcoded colors; `currentColor` or theme variables are used exclusively.
+  - All spacing rules are scoped under `body.dense-reading-mode` so they have
+    no effect when the mode is disabled.
+  - Line-width settings operate independently of the master switch.
    ============================================================ */
 
 /* ------------------------------------------------------------
-   行宽档位：只改主题变量，独立于总开关生效
-   注意：必须定义在视图层级（与 border-polished 的接管逻辑同层），
-   写在 body 上会被 Obsidian 的内联 --file-line-width: 700px 压掉。
-   选择器优先级 (0,4,1) > border-polished 的 (0,2,0)，稳定生效。
+   Line width settings: Modifies theme variables only; takes effect
+   independently of the master toggle.  Note: Must be defined at the view level
+   (matching the scope of the `border-polished` override logic); defining it
+   on the `body` element would result in it being overridden by Obsidian's
+   inline `--file-line-width: 700px` style.  Selector specificity (0,4,1) >
+   `border-polished`'s (0,2,0), ensuring reliable application.
    ------------------------------------------------------------ */
 body.dense-w44 :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: 44rem; }
 body.dense-w54 :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: 54rem; }
@@ -24,18 +29,18 @@ body.dense-w78 :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markd
 body.dense-w-custom :is(.markdown-source-view.mod-cm6, .markdown-preview-view, .markdown-rendered) { --file-line-width: var(--dense-width-value, 54rem); }
 
 /* ------------------------------------------------------------
-   总开关开启时：阅读视图密排
-   （仅 .markdown-preview-view / .markdown-rendered，
-    不触碰实时预览的编辑结构）
+   When the master switch is on: Compact layout in Reading View
+   (Affects only .markdown-preview-view / .markdown-rendered;
+   does not alter the editing structure of Live Preview)
    ------------------------------------------------------------ */
 
-/* 段落 */
+/* paragraph */
 body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) p {
   margin: 0.45em 0;
   line-height: 1.65;
 }
 
-/* 标题 */
+/* title */
 body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) h2 {
   margin: 1.15em 0 0.45em;
   font-size: 1.15em;
@@ -46,7 +51,7 @@ body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) h3 {
   font-size: 1.05em;
 }
 
-/* 列表 */
+/* list */
 body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) :is(ul, ol) {
   margin-top: 0.35em;
   margin-bottom: 0.45em;
@@ -56,14 +61,15 @@ body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) li {
   margin: 0.12em 0;
 }
 
-/* 水平线：跟随文字颜色，18% 透明度 */
+/* Horizontal line: Follows text color, 18% opacity. */
 body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) hr {
   border: none;
   height: 1px;
   background-color: color-mix(in srgb, currentColor 18%, transparent);
 }
 
-/* 行内代码：跟随文字颜色，5% 透明度底色（排除代码块内的 code） */
+/* Inline code: Matches text color, with a background at 5% opacity
+   (excluding `code` elements within code blocks). */
 body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) :not(pre) > code {
   background-color: color-mix(in srgb, currentColor 5%, transparent);
   padding: 0.08em 0.28em;
@@ -71,15 +77,17 @@ body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) :not(pre
 }
 
 /* ------------------------------------------------------------
-   实时预览：只放宽 .cm-line 行距，不动任何结构、间距、边距
-   （如觉编辑手感异常，删除此块即可，不影响其余功能）
+   Live Preview: Adjusts only the line height of `.cm-line`; does not alter
+   structure, spacing, or margins.  (If the editing feel seems off, simply
+   delete this block; other functions remain unaffected.)
    ------------------------------------------------------------ */
 body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
   line-height: 1.65;
 }
 
 /* ------------------------------------------------------------
-   设置页专用样式（前缀 dr-，只作用于本插件的设置页）
+   Styles specific to the settings page (prefixed with `dr-`;
+   apply only to this plugin's settings page)
    ------------------------------------------------------------ */
 
 .dr-usage {
@@ -221,7 +229,7 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
   opacity: 0.5;
 }
 
-/* ---- 赞助区块 ---- */
+/* ---- Sponsored Block ---- */
 
 .sp-box {
   margin-top: 1em;
@@ -244,8 +252,9 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
   line-height: 1.55;
 }
 
-/* 单一入口（GitHub Sponsors）。做成一行链接，
-   不再有国内 / 海外分列 —— 见 sponsor.js 顶部注释。 */
+/* Single entry point (GitHub Sponsors). Consolidated into a
+  single line of links; no longer split between domestic and
+  overseas — see the comments at the top of sponsor.js.  */
 .sp-row {
   display: flex;
   flex-wrap: wrap;
