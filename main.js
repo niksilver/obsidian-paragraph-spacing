@@ -1,27 +1,41 @@
-/* Dense Reading（密排阅读）
-   把原来那个 CSS 片段（dense-reading.css）+ Style Settings 的组合，换成真插件。
+/*
+   Dense Reading
+   From https://github.com/yunmin311/dense-reading-obsidian/tree/main
+   Chinese translated by Google Translate.
 
-   为什么要变成插件：
-   片段那套必须先在 Style Settings 里勾总开关、再手写 `cssclasses: dense-w54`
-   才生效 —— 用户得先知道要写什么才用得上。插件把这层拿掉：
-   命令面板直接切档位、每篇笔记记住自己的档位、设置页有实时预览。
+   Replacing the original combination of a CSS snippet (`dense-reading.css`)
+   and the Style Settings plugin with a dedicated plugin.
 
-   设计上守住原来片段的三条底线（它们是踩过坑得出的，不要动）：
+   Why switch to a plugin?
 
-   1. 只改「视图层」，不改文件。
-      行宽必须写在 `:is(.markdown-source-view.mod-cm6, .markdown-preview-view,
-      .markdown-rendered)` 上，不能写在 body 上 —— Obsidian 会内联
-      `--file-line-width: 700px`，写在 body 上会被它压掉，看起来像没生效。
+   The snippet approach required users to first toggle the master switch
+   in Style Settings and then manually type `cssclasses: dense-w54` for
+   it to take effect—meaning users had to know exactly what to type to
+   use it. The plugin removes this friction: switch modes directly via the
+   command palette, have each note remember its own mode, and enjoy a live
+   preview in the settings page.
 
-   2. 间距规则全部包在 `body.dense-reading-mode` 下。
-      关掉总开关时，除了行宽以外零生效，不残留任何副作用。
+   The design adheres to three key principles established by the original
+   snippet (these were hard-learned lessons; do not alter them):
 
-   3. 不写死颜色。
-      hr / 行内代码一律 currentColor + color-mix，跟随主题。
+   1. Modify only the "view layer," not the file itself.  Line width must
+   be defined on `:is(.markdown-source-view.mod-cm6, .markdown-preview-view,
+   .markdown-rendered)` rather than the `body` tag. Obsidian injects an inline
+   style for `--file-line-width: 700px`; defining it on the `body` causes
+   it to be overridden, making it appear as though the setting isn't working.
 
-   实现路线：只往 body 上加 class。
-   档位是 dense-w44 / dense-w54 / dense-w66 / dense-w78 / dense-w-custom，
-   与片段完全同名 —— 这样两套可以共存、也可以平滑迁移，互不打架。
+   2. Encapsulate all spacing rules within `body.dense-reading-mode`.
+   When the master switch is turned off, nothing remains active (except for
+   line width), leaving no side effects.
+
+   3. Avoid hard-coding colors.  Use `currentColor` and `color-mix` for
+   elements like horizontal rules (`hr`) and inline code, ensuring they
+   adapt to the active theme.
+
+   Implementation strategy: Simply add a class to the `body` element.
+   The modes are named `dense-w44`, `dense-w54`, `dense-w66`, `dense-w78`,
+   and `dense-w-custom`, matching the snippet names exactly. This allows
+   both systems to coexist and enables a smooth migration without conflicts.
 */
 
 "use strict";
@@ -30,38 +44,33 @@ const { Plugin, PluginSettingTab, Setting, Notice } = require("obsidian");
 
 
 /* ============================================================
-   【内联模块 · 自动生成，请勿手改这一段】
+   [Inline Module · Automatically generated; please do not manually edit this section]
    ------------------------------------------------------------
-   以下三段来自仓库里的 locales.js / i18n.js / sponsor.js，
-   由打包脚本 bundle-inline.js 拼接到此（脚本在 _scratch/_i18n/）。
+   The following three sections originate from `locales.js`, `i18n.js`,
+   and `sponsor.js` in the repository, and are concatenated here by the
+   `bundle-inline.js` script (located in `_scratch/_i18n/`).
 
-   为什么不写 require("./locales")：
-   Obsidian 注入的 require 是白名单函数，只认 obsidian / @codemirror /
-   @lezer 与 Electron 的 window.require，**不解析插件的相对路径** ——
-   require("./x") 会返回 undefined，插件直接加载失败。
+   Why not simply use `require("./locales")`?  The `require` function injected
+   by Obsidian is restricted to a whitelist—recognizing only `obsidian`,
+   `@codemirror`, `@lezer`, and Electron's `window.require`—and **does not
+   resolve relative paths** within the plugin.  Consequently, `require("./x")`
+   would return `undefined`, causing the plugin to fail to load.
 
-   改动流程：改源文件 → node bundle-inline.js <插件目录> → 跑 sync-plugins.ps1
+   Workflow for changes: Modify source files → run `node bundle-inline.js
+   <plugin-directory>` → run `sync-plugins.ps1`.
+
    ============================================================ */
 
-/* ---------- 来自 locales.js ---------- */
-/* Dense Reading —— 界面字符串表。
-   只放本插件专属的键；语言下拉、赞助区块、通用按钮由公共表提供。 */
+/* ---------- locales.js ---------- */
+/* Dense Reading —— Interface string table.
 
-/* 公共键 —— 四个插件完全一致，改动请四处同步（i18n.js 里也有同样的说明）。 */
+   Include only the keys specific to this plugin; the language dropdown,
+   sponsorship section, and general buttons are provided by the common table.  */
+
+/* Shared keys — These are identical across all four plugins; please
+   synchronize any changes across all of them (there is a similar note in `i18n.js`).*/
+
 const COMMON = {
-  zh: {
-    "settings.language.name": "界面语言",
-    "settings.language.desc":
-      "设置页、命令与提示的显示语言。「跟随 Obsidian」会随界面语言自动切换。",
-    "sponsor.title": "赞助支持",
-    "sponsor.body":
-      "这些插件都是独立开发并免费开源的，没有任何商业绑定。如果它确实省下了时间，可以通过 GitHub Sponsors 支持后续维护。",
-    "meta.version": "版本",
-    "meta.repository": "仓库",
-    "common.reset": "恢复默认",
-    "common.reset.done": "已恢复默认设置",
-    "common.clear": "清除",
-  },
   en: {
     "settings.language.name": "Interface language",
     "settings.language.desc":
@@ -77,56 +86,8 @@ const COMMON = {
   },
 };
 
-/* 本插件专属键。 */
+/* A key exclusive to this plugin. */
 const OWN = {
-  zh: {
-    "meta.desc": "密排阅读：紧凑间距 + 可调行宽，不依赖 Style Settings 与 CSS 片段。",
-
-    "command.toggle": "切换密排阅读",
-    "command.cycle": "循环切换行宽档位",
-    "command.pin": "为当前笔记固定行宽档位",
-    "command.unpin": "清除当前笔记的行宽档位",
-
-    "notice.mode.on": "密排阅读：开",
-    "notice.mode.off": "密排阅读：关",
-    "notice.width": "行宽：{label}",
-    "notice.pinned": "已固定为「{label}」：{path}",
-    "notice.unpinned": "已清除该笔记的档位固定",
-
-    "preset.w44": "窄读",
-    "preset.w54": "均衡",
-    "preset.w66": "宽幅",
-    "preset.w78": "超宽",
-    "preset.custom": "自定义",
-
-    "settings.usage":
-      "行宽按「视图层」生效，不受总开关影响；间距只在总开关打开时作用。" +
-      "两者都与原来的 dense-reading.css 片段同名，可平滑迁移。",
-
-    "settings.mode.name": "密排阅读总开关",
-    "settings.mode.desc": "收紧密排阅读视图的段落与标题间距。关闭时除行宽外零生效。",
-
-    "settings.width.name": "行宽档位",
-    "settings.width.desc": "覆盖主题的可读行宽。与总开关互相独立。",
-
-    "settings.custom.name": "自定义行宽",
-    "settings.custom.desc": "仅在行宽档位选「自定义」时生效（36–96rem）。",
-
-    "settings.perNote.name": "按笔记记住档位",
-    "settings.perNote.desc": "每篇笔记可以固定自己的档位，切换笔记时自动套用。",
-
-    "settings.pinned.title": "已固定档位的笔记（{n}）",
-    "settings.pinned.empty": "还没有固定过档位的笔记",
-    "settings.pinned.more": "…另外 {n} 条",
-
-    "settings.preview.label": "行宽预览",
-    "settings.preview.sample":
-      "阅读行宽决定了眼睛每行的移动距离。窄一点更专注，宽一点更适合表格与代码。",
-
-    "settings.reset.name": "恢复默认设置",
-    "settings.reset.desc": "把总开关、行宽档位与每篇笔记的固定全部清回初始值。",
-  },
-
   en: {
     "meta.desc":
       "Dense reading: tighter spacing plus an adjustable line width, with no Style Settings or CSS snippet required.",
@@ -180,7 +141,8 @@ const OWN = {
   },
 };
 const LOCALES = buildLocales();
-/** 把公共表与本插件表合并；插件缺某语言时回落到英语。 */
+/** Merge the public table with the plugin's table; fall back to English
+    if the plugin lacks a specific language. */
 function buildLocales() {
   const out = {};
   const langs = new Set([...Object.keys(COMMON), ...Object.keys(OWN)]);
@@ -194,32 +156,41 @@ function buildLocales() {
   return out;
 }
 
-/* ---------- 来自 i18n.js ---------- */
-/* i18n —— 多语言运行时。
+/* ---------- i18n.js ---------- */
+/* i18n — A multi-language runtime. 
 
-   为什么不用 Obsidian 的 moment.locale()：moment 只管日期格式化，不提供
-   界面字符串表；而且用户在设置页切语言要即时生效，moment 的切换要等界面重建。
+   Why not use Obsidian's `moment.locale()`? Moment handles only date
+   formatting and does not provide a UI string table; furthermore, language
+   changes in the settings page need to take effect immediately, whereas
+   Moment's switching mechanism requires the UI to be rebuilt.
 
-   设计约束：
-   - t() 永不抛异常：缺键回落到英语，英语也缺就返回键名本身。
-     设置页少一行字，好过整页白屏。
-   - 支持 {name} 占位符；参数没给就原样保留，方便定位漏传。
-   - 界面字符串全部集中在 locales.js，main.js 里不留字面量。
+   Design constraints:
+   - `t()` never throws exceptions: if a key is missing, it falls back
+     to English; if the English version is also missing, it returns the key
+     name itself.  (A missing line of text in the settings page is better than
+     a blank screen.)
+   - Supports `{name}` placeholders; if a parameter is not provided, the
+     placeholder remains as-is, making it easy to spot missing arguments.
 
-   这份 i18n.js 在四个自研插件里是同一份（各自复制，因为插件是独立仓库、
-   不能互相 require）。改动请四处同步。 */
+   - All UI strings are centralized in `locales.js`; no string literals are
+     kept in `main.js`.
 
-/** 设置页语言下拉框的定义顺序。 */
+   This `i18n.js` file is shared across four self-developed plugins (each has
+   its own copy, as the plugins reside in independent repositories and cannot
+   `require` one another). Please ensure any changes are synchronized across
+   all four. */
+
+/** Set the definition order for the language drop-down list on the page. */
 const LANGUAGE_OPTIONS = [
-  { id: "auto", label: "跟随 Obsidian / Follow Obsidian" },
-  { id: "zh", label: "简体中文" },
+  { id: "auto", label: "Follow Obsidian" },
   { id: "en", label: "English" },
 ];
 
-/**
- * 把偏好解析成实际语言 id。
- * "auto" 时读 Obsidian 的界面语言；任何异常都回落到英语 ——
- * 语言探测失败不值得让设置页打不开。
+/* Resolve preferences into actual language IDs.
+   When set to "auto," it uses Obsidian's interface language; it falls back
+   to English in the event of any error — a failure in language detection
+   shouldn't prevent the settings page from opening.
+
  */
 function resolveLanguage(pref) {
   if (pref && pref !== "auto" && LOCALES[pref]) return pref;
@@ -231,7 +202,7 @@ function resolveLanguage(pref) {
     const short = String(raw).toLowerCase().slice(0, 2);
     if (short && LOCALES[short]) return short;
   } catch (e) {
-    /* 忽略：回落英语 */
+    /* Ignore: English for "fall back" / "retrace" */
   }
   return "en";
 }
@@ -249,7 +220,7 @@ function translate(lang, key, vars) {
   );
 }
 
-/** 绑定插件实例：读 settings.language，暴露 t()。 */
+/** Bind plugin instance: Read settings.language and expose t(). */
 function bindI18n(plugin) {
   const current = () =>
     resolveLanguage(plugin && plugin.settings ? plugin.settings.language : "auto");
@@ -266,18 +237,27 @@ function bindI18n(plugin) {
   return plugin.i18n;
 }
 
-/* ---------- 来自 sponsor.js ---------- */
-/* 赞助区块。
- *
- * 刻意做成一个独立小节而不是塞进说明文字里：设置页是用户唯一会认真读的
- * 地方，藏起来等于没有。区块只渲染链接，不引任何外部脚本或图片 ——
- * 插件必须保持零网络请求，否则会在社区市场审核时被质疑。
- *
- * 为什么只有 GitHub Sponsors 一条：
- *   最初国内 / 海外分列（爱发电 + Ko-fi），但 qy 决定统一走 GitHub ——
- *   单一入口便于维护，也避免在插件里出现多个可能失效/需要实名认证的平台。
- *   保留 SPONSORS 数组结构（而不是塌成一个字符串），是为了将来真要加
- *   第二条时改数据即可，不用动渲染代码。
+/* ---------- sponsor.js ---------- */
+/* 
+   Sponsorship block.
+
+   Deliberately designed as a standalone section rather than being buried in
+   the descriptive text: the settings page is the only place users actually
+   read carefully, so hiding it effectively renders it invisible. The block
+   renders only a link and loads no external scripts or images—the plugin
+   must maintain zero network requests to avoid scrutiny during the community
+   marketplace review process.
+
+   Why is there only a single GitHub Sponsors entry?  Initially, domestic
+   and international options (Aifadian + Ko-fi) were listed separately,
+   but qy decided to consolidate everything under GitHub— a single entry
+   point simplifies maintenance and avoids including multiple platforms that
+   might break or require real-name verification.
+
+   Retaining the `SPONSORS` array structure (instead of flattening it into
+   a single string) ensures that if a second entry needs to be added in
+   the future, only the data requires modification, leaving the rendering
+   code untouched.
  */
 
 const SPONSORS = [
@@ -290,7 +270,8 @@ function linkRow(parent, label, url) {
   a.setAttr("rel", "noopener");
 }
 
-/** 在 parent 里渲染赞助区块。t 是当前语言的取词函数。 */
+/** Render the sponsorship block within the parent component.
+   `t` is the translation function for the current language. */
 function renderSponsor(parent, t) {
   const box = parent.createDiv({ cls: "sp-box" });
   box.createDiv({ cls: "sp-title", text: t("sponsor.title") });
@@ -300,16 +281,21 @@ function renderSponsor(parent, t) {
   for (const l of SPONSORS) linkRow(row, l.label, l.url);
 }
 
-/* ======================== 内联模块结束 ======================== */
-/* ---------------------------------------------------------------- 常量 */
+/* ======================== Inline module end ======================== */
+/* ---------------------------------------------------------------- constant */
 
 const WIDTH_CLASSES = ["dense-w44", "dense-w54", "dense-w66", "dense-w78", "dense-w-custom"];
 const MODE_CLASS = "dense-reading-mode";
 
-/** 档位表：值是 rem 数；null 表示「自定义」，另取 settings.customWidth。
- *  `cls` 是它对应的 body class —— 显式写出来而不是靠字符串拼，
- *  因为 "custom" 这种档位名一旦去拼就会拼成 `dense-wustom`。
- *  `key` 是显示名的 i18n 键，语言切换后标签跟着变，class 与 id 永不随语言变。 */
+/* Breakpoint table:
+   - values ​​are in `rem`; `null` indicates "custom," falling
+     back to `settings.customWidth`.
+   - `cls` is the corresponding body class—defined explicitly rather than
+     via string concatenation, because concatenating a name like "custom"
+     would result in something like `dense-wustom`.
+   - `key` is the i18n key for the display name; the label updates when
+     the language changes, whereas classes and IDs remain constant.
+    */
 const PRESETS = [
   { id: "w44", key: "preset.w44", rem: 44, cls: "dense-w44" },
   { id: "w54", key: "preset.w54", rem: 54, cls: "dense-w54" },
@@ -318,24 +304,28 @@ const PRESETS = [
   { id: "custom", key: "preset.custom", rem: null, cls: "dense-w-custom" },
 ];
 
-/** 档位 id → body class。唯一入口，避免在多处重复拼接逻辑。 */
+/* Tier ID → body class. A single entry point to avoid duplicating
+   concatenation logic in multiple places.  */
 function classForPreset(id) {
   const hit = PRESETS.find((p) => p.id === id);
   return hit ? hit.cls : "dense-w54";
 }
 
 const DEFAULT_SETTINGS = {
-  /** 总开关：阅读视图的密排间距。与行宽互相独立，沿用片段的语义。 */
+  /* Master switch: Compact line spacing for Reading View. Independent of
+     line width; adheres to the semantic meaning of the segment.  */
   denseMode: false,
-  /** 行宽档位 id（见 PRESETS）。 */
+  /* Line width preset ID (see PRESETS).   */
   widthPreset: "w54",
-  /** 自定义档位的 rem 数（36–96，与片段的滑条范围一致）。 */
+  /* The number of rem to customize the scale (36–96, consistent with the
+     clip's slider range).  */
   customWidth: 54,
-  /** 打开新笔记时，是否自动套用该笔记记住的档位。 */
+  /* When opening a new note, should the note's saved settings be
+     automatically applied?  */
   rememberPerNote: true,
-  /** 每篇笔记的档位覆盖：{ "path/to/note.md": "w66" }。 */
+  /* Tier coverage for each note: { "path/to/note.md": "w66" }.  */
   perNote: {},
-  /** 界面语言：auto / zh / en（见 i18n.js）。 */
+  /* Interface language: auto / zh / en (see i18n.js).  */
   language: "auto",
 };
 
@@ -349,7 +339,7 @@ class DenseReadingPlugin extends Plugin {
       this.settings.perNote = {};
     }
 
-    // 首次加载：把状态落到 body 上。
+    // Initial load: Persist the state to the `body`.
     this.applyClasses();
 
     bindI18n(this);
@@ -410,7 +400,7 @@ class DenseReadingPlugin extends Plugin {
       },
     });
 
-    // 换笔记时套用该笔记自己的档位（如果有）。
+    // When switching notes, apply that note's specific setting (if available).
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
         this.applyClasses();
@@ -425,11 +415,12 @@ class DenseReadingPlugin extends Plugin {
   }
 
   onunload() {
-    // 卸载时把插件加的 class 全部摘掉，不留残留。
+    // Remove all classes added by the plugin during uninstallation,
+    // leaving no traces behind.
     try {
       document.body.removeClass(MODE_CLASS, ...WIDTH_CLASSES);
     } catch {
-      /* 忽略卸载竞态 */
+      // Ignore uninstallation race conditions.
     }
   }
 
@@ -444,7 +435,8 @@ class DenseReadingPlugin extends Plugin {
       : `${name}（${p.rem}rem）`;
   }
 
-  /** 当前笔记若固定过档位，返回它；否则返回全局档位。 */
+  /* If the current note has a fixed slot assigned, return it;
+     otherwise, return the global slot.  */
   effectivePreset() {
     if (!this.settings.rememberPerNote) return this.settings.widthPreset;
     try {
@@ -454,12 +446,13 @@ class DenseReadingPlugin extends Plugin {
         if (pinned && PRESETS.some((p) => p.id === pinned)) return pinned;
       }
     } catch {
-      /* 拿不到活动文件就用全局值 */
+      /* If the event file cannot be retrieved, use the global value.  */
     }
     return this.settings.widthPreset;
   }
 
-  /** 把两个维度的状态写成 body class —— 这是插件唯一真正「做事」的地方。 */
+  /* Writing the two-dimensional state as a body class—this is the only
+     place where the plugin actually "does" anything.*/
   applyClasses() {
     const body = document.body;
     if (!body) return;
@@ -473,10 +466,12 @@ class DenseReadingPlugin extends Plugin {
       if (this.settings.denseMode) body.addClass(MODE_CLASS);
       else body.removeClass(MODE_CLASS);
 
-      // 自定义档位靠这个变量取值；CSS 里写了 var(--dense-width-value, 54rem) 兜底。
+      /* Custom spacing levels rely on this variable for their values;
+         a fallback of `var(--dense-width-value, 54rem)` is defined in the CSS.  */
       body.style.setProperty("--dense-width-value", `${this.clampWidth(this.settings.customWidth)}rem`);
     } catch {
-      /* 任何异常都不该让插件崩掉；最坏情况就是样式没生效。 */
+      /* No anomaly should cause the plugin to crash; the worst-case
+         scenario is simply that the styles fail to take effect. */
     }
   }
 
@@ -508,7 +503,7 @@ class DenseReadingPlugin extends Plugin {
     this.applyClasses();
   }
 
-  /** 把当前档位固定到某篇笔记上。 */
+  /* Pin the current setting to a specific note.  */
   async pinCurrentNote(path) {
     const id = this.effectivePreset();
     this.settings.perNote[path] = id;
@@ -643,19 +638,26 @@ class DenseReadingSettingTab extends PluginSettingTab {
       }
     }
 
-    // 实时预览：改滑条时立刻看到宽度变化，不用来回切笔记试。
-    //
-    // 为什么不能直接 `max-width: <n>rem`：
-    //   真实行宽是 44–96rem（约 704–1536px），而设置页内容区只有约 640px 宽。
-    //   直接设绝对值的话**每个档位都会撑满整格**，五个档位看起来一模一样
-    //   —— 预览等于没有。所以这里改成等比映射（见 updatePreview）。
+    /* Real-time preview: See width changes immediately when adjusting
+       the slider, without needing to switch back and forth to test.
+
+       Why not simply use `max-width: <n>rem`?  The actual line width ranges
+       from 44–96rem (approx. 704–1536px), whereas the content area in
+       the settings is only about 640px wide.  If an absolute value were
+       set directly, **every setting level would fill the entire available
+       space**, making all five levels look identical — rendering the
+       preview useless. Therefore, a proportional mapping approach is used
+       here instead (see `updatePreview`).
+    */
+
     this.previewEl = containerEl.createDiv({ cls: "dr-preview" });
     this.previewEl.createEl("div", {
       cls: "dr-preview-label",
       text: t("settings.preview.label"),
     });
     const stage = this.previewEl.createDiv({ cls: "dr-preview-stage" });
-    // 标尺：把「相对于最窄档位」的宽度画出来，让档位差异可见。
+    // Scale: Plot the width "relative to the narrowest setting" to make
+    // the differences between settings visible.
     const ruler = stage.createDiv({ cls: "dr-preview-ruler" });
     this.barEl = ruler.createDiv({ cls: "dr-preview-bar" });
     this.sampleEl = stage.createDiv({ cls: "dr-preview-sample" });
@@ -668,8 +670,10 @@ class DenseReadingSettingTab extends PluginSettingTab {
       .setDesc(t("settings.reset.desc"))
       .addButton((b) =>
         b.setButtonText(t("common.reset")).onClick(async () => {
-          // 语言是「这一页本身」的偏好，恢复默认时刻意保留，
-          // 否则中文用户点一下按钮界面就变成英文了。
+          // The language setting is specific to "this page itself"
+          // and is intentionally preserved when reverting to defaults;
+          // otherwise, a single click on the button would switch the
+          // interface to English for Chinese users.
           const keepLang = this.plugin.settings.language;
           this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS, {
             perNote: {},
@@ -685,7 +689,8 @@ class DenseReadingSettingTab extends PluginSettingTab {
     this.renderFooter(containerEl, t);
   }
 
-  /** 版本 + 仓库 + 赞助。四个插件共用同一套结构与文案。 */
+  /* Version + Repository + Sponsorship. All four plugins share the
+     same structure and copy.  */
   renderFooter(containerEl, t) {
     const wrap = containerEl.createDiv({ cls: "dr-about" });
 
@@ -702,13 +707,19 @@ class DenseReadingSettingTab extends PluginSettingTab {
     renderSponsor(wrap, t);
   }
 
-  /**
-   * 把真实行宽映射到设置页里能看出差异的比例。
-   *
-   * 真实行宽 44–96rem 全部超过设置页宽度，直接撑满会导致档位之间毫无区别。
-   * 这里按 44rem 归一：最窄档位占 55%，最宽档位占 100%，中间线性插值。
-   * 于是 w44 与 w78 的差距（44 → 78，约 1.8 倍）在预览里表现为 55% → 81%，
-   * 一眼可辨；这是**比例示意**，不是像素级等比。
+  /* Map the actual line widths to a scale that makes the differences visually
+     apparent on the settings page.
+
+     The actual line widths range from 44rem to 96rem—all exceeding the
+     width of the settings page itself; simply filling the available space
+     would result in no discernible difference between the settings.  Here,
+     the values ​​are normalized against 44rem: the narrowest setting
+     occupies 55% of the width, the widest occupies 100%, and intermediate
+     values ​​are determined via linear interpolation.  Consequently,
+     the difference between w44 and w78 (a shift from 44 to 78, or roughly
+     1.8x) is represented in the preview as a change from 55% to 81%, making
+     the distinction immediately obvious; note that this is a **proportional
+     representation**, not a pixel-perfect scale model.
    */
   updatePreview() {
     if (!this.sampleEl) return;

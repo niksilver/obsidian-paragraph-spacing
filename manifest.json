@@ -1,6 +1,6 @@
 {
-  "id": "dense-reading",
-  "name": "Dense Reading",
+  "id": "dense-reading-nik",
+  "name": "Dense Reading (Nik's edit)",
   "version": "0.2.2",
   "minAppVersion": "1.4.0",
   "description": "Tighter paragraph and heading spacing for reading view, with a switchable line width per note or per view.",
