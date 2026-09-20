@@ -1,10 +1,9 @@
-{
-  "id": "dense-reading-nik",
-  "name": "Dense Reading (Nik's edit)",
-  "version": "0.2.2",
+  "id": "obsidian-paragraph-spacing",
+  "name": "Paragraph spacing",
+  "version": "0.1.0",
   "minAppVersion": "1.4.0",
-  "description": "Tighter paragraph and heading spacing for reading view, with a switchable line width per note or per view.",
-  "author": "yunmin311",
-  "authorUrl": "https://github.com/yunmin311",
+  "description": "Paragraphs to have extra spaces between them",
+  "author": "niksilver",
+  "authorUrl": "https://github.com/niksilver",
   "isDesktopOnly": false
 }
