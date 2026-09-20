@@ -97,31 +97,13 @@ const OWN = {
 
     "notice.mode.on": "Dense reading: on",
     "notice.mode.off": "Dense reading: off",
-    "notice.width": "Line width: {label}",
-
-    "preset.w44": "Narrow",
-    "preset.w54": "Balanced",
-    "preset.w66": "Wide",
-    "preset.w78": "Extra wide",
-    "preset.custom": "Custom",
 
     "settings.usage":
-      "Line width applies at the view layer and is independent of the master switch; spacing only kicks in while the switch is on. Both keep the same class names as the original dense-reading.css snippet, so migrating is seamless.",
+      "Spacing applies at the view layer and while the switch is on.",
 
     "settings.mode.name": "Dense spacing",
     "settings.mode.desc":
-      "Tightens paragraph and heading spacing in reading view. With it off, nothing but the line width applies.",
-
-    "settings.width.name": "Line-width preset",
-    "settings.width.desc":
-      "Overrides the theme's readable line width. Independent of the master switch.",
-
-    "settings.custom.name": "Custom line width",
-    "settings.custom.desc": "Only used when the preset above is set to Custom (36–96rem).",
-
-    "settings.preview.label": "Width preview",
-    "settings.preview.sample":
-      "Line width sets how far the eye travels per line. Narrower reads more focused; wider suits tables and code.",
+      "Tightens paragraph and heading spacing in reading view.",
 
     "settings.reset.name": "Restore defaults",
     "settings.reset.desc":
@@ -272,42 +254,12 @@ function renderSponsor(parent, t) {
 /* ======================== Inline module end ======================== */
 /* ---------------------------------------------------------------- constant */
 
-const WIDTH_CLASSES = ["dense-w44", "dense-w54", "dense-w66", "dense-w78", "dense-w-custom"];
 const MODE_CLASS = "dense-reading-mode";
-
-/* Breakpoint table:
-   - values ​​are in `rem`; `null` indicates "custom," falling
-     back to `settings.customWidth`.
-   - `cls` is the corresponding body class—defined explicitly rather than
-     via string concatenation, because concatenating a name like "custom"
-     would result in something like `dense-wustom`.
-   - `key` is the i18n key for the display name; the label updates when
-     the language changes, whereas classes and IDs remain constant.
-    */
-const PRESETS = [
-  { id: "w44", key: "preset.w44", rem: 44, cls: "dense-w44" },
-  { id: "w54", key: "preset.w54", rem: 54, cls: "dense-w54" },
-  { id: "w66", key: "preset.w66", rem: 66, cls: "dense-w66" },
-  { id: "w78", key: "preset.w78", rem: 78, cls: "dense-w78" },
-  { id: "custom", key: "preset.custom", rem: null, cls: "dense-w-custom" },
-];
-
-/* Tier ID → body class. A single entry point to avoid duplicating
-   concatenation logic in multiple places.  */
-function classForPreset(id) {
-  const hit = PRESETS.find((p) => p.id === id);
-  return hit ? hit.cls : "dense-w54";
-}
 
 const DEFAULT_SETTINGS = {
   /* Master switch: Compact line spacing for Reading View. Independent of
      line width; adheres to the semantic meaning of the segment.  */
   denseMode: false,
-  /* Line width preset ID (see PRESETS).   */
-  widthPreset: "w54",
-  /* The number of rem to customize the scale (36–96, consistent with the
-     clip's slider range).  */
-  customWidth: 54,
   /* Interface language: auto / zh / en (see i18n.js).  */
   language: "auto",
 };
@@ -341,23 +293,6 @@ class DenseReadingPlugin extends Plugin {
       },
     });
 
-    this.addCommand({
-      id: "cycle-width",
-      name: t("command.cycle"),
-      callback: async () => {
-        const ids = PRESETS.map((p) => p.id);
-        const at = ids.indexOf(this.settings.widthPreset);
-        this.settings.widthPreset = ids[(at + 1) % ids.length];
-        await this.saveSettings();
-        this.applyClasses();
-        new Notice(
-          this.i18n.t("notice.width", {
-            label: this.presetLabel(this.settings.widthPreset),
-          })
-        );
-      },
-    });
-
     // When switching notes, apply that note's specific setting (if available).
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
@@ -376,71 +311,37 @@ class DenseReadingPlugin extends Plugin {
     // Remove all classes added by the plugin during uninstallation,
     // leaving no traces behind.
     try {
-      document.body.removeClass(MODE_CLASS, ...WIDTH_CLASSES);
+      document.body.removeClass(MODE_CLASS);
     } catch {
       // Ignore uninstallation race conditions.
     }
   }
 
-  /* -------------------------------------------------------------- 状态 */
-
-  presetLabel(id) {
-    const p = PRESETS.find((x) => x.id === id);
-    if (!p) return id;
-    const name = this.i18n.t(p.key);
-    return p.rem === null
-      ? `${name}（${this.settings.customWidth}rem）`
-      : `${name}（${p.rem}rem）`;
-  }
+  /* -------------------------------------------------------------- state */
 
   /* Writing the two-dimensional state as a body class—this is the only
      place where the plugin actually "does" anything.*/
   applyClasses() {
     const body = document.body;
     if (!body) return;
-    const preset = this.settings.widthPreset || "w54";
-    const widthClass = classForPreset(preset);
 
     try {
-      body.removeClass(...WIDTH_CLASSES);
-      body.addClass(widthClass);
 
       if (this.settings.denseMode) body.addClass(MODE_CLASS);
       else body.removeClass(MODE_CLASS);
 
-      /* Custom spacing levels rely on this variable for their values;
-         a fallback of `var(--dense-width-value, 54rem)` is defined in the CSS.  */
-      body.style.setProperty("--dense-width-value", `${this.clampWidth(this.settings.customWidth)}rem`);
     } catch {
       /* No anomaly should cause the plugin to crash; the worst-case
          scenario is simply that the styles fail to take effect. */
     }
   }
 
-  clampWidth(raw) {
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return 54;
-    return Math.min(96, Math.max(36, n));
-  }
-
   async saveSettings() {
     await this.saveData(this.settings);
   }
 
-  async setPreset(id) {
-    this.settings.widthPreset = id;
-    await this.saveSettings();
-    this.applyClasses();
-  }
-
   async setDenseMode(on) {
     this.settings.denseMode = on;
-    await this.saveSettings();
-    this.applyClasses();
-  }
-
-  async setCustomWidth(rem) {
-    this.settings.customWidth = this.clampWidth(rem);
     await this.saveSettings();
     this.applyClasses();
   }
@@ -490,61 +391,6 @@ class DenseReadingSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName(t("settings.width.name"))
-      .setDesc(t("settings.width.desc"))
-      .addDropdown((drop) => {
-        for (const p of PRESETS) {
-          const name = t(p.key);
-          drop.addOption(p.id, p.rem === null ? name : `${name} ${p.rem}rem`);
-        }
-        drop.setValue(this.plugin.settings.widthPreset).onChange((v) => {
-          void this.plugin.setPreset(v);
-          this.display();
-        });
-      });
-
-    new Setting(containerEl)
-      .setName(t("settings.custom.name"))
-      .setDesc(t("settings.custom.desc"))
-      .addSlider((s) =>
-        s
-          .setLimits(36, 96, 0.5)
-          .setValue(this.plugin.settings.customWidth)
-          .setDynamicTooltip()
-          .onChange((v) => {
-            void this.plugin.setCustomWidth(v);
-            this.updatePreview();
-          })
-      );
-
-    /* Real-time preview: See width changes immediately when adjusting
-       the slider, without needing to switch back and forth to test.
-
-       Why not simply use `max-width: <n>rem`?  The actual line width ranges
-       from 44–96rem (approx. 704–1536px), whereas the content area in
-       the settings is only about 640px wide.  If an absolute value were
-       set directly, **every setting level would fill the entire available
-       space**, making all five levels look identical — rendering the
-       preview useless. Therefore, a proportional mapping approach is used
-       here instead (see `updatePreview`).
-    */
-
-    this.previewEl = containerEl.createDiv({ cls: "dr-preview" });
-    this.previewEl.createEl("div", {
-      cls: "dr-preview-label",
-      text: t("settings.preview.label"),
-    });
-    const stage = this.previewEl.createDiv({ cls: "dr-preview-stage" });
-    // Scale: Plot the width "relative to the narrowest setting" to make
-    // the differences between settings visible.
-    const ruler = stage.createDiv({ cls: "dr-preview-ruler" });
-    this.barEl = ruler.createDiv({ cls: "dr-preview-bar" });
-    this.sampleEl = stage.createDiv({ cls: "dr-preview-sample" });
-    this.sampleEl.setText(t("settings.preview.sample"));
-    this.readoutEl = this.previewEl.createDiv({ cls: "dr-preview-readout" });
-    this.updatePreview();
-
-    new Setting(containerEl)
       .setName(t("settings.reset.name"))
       .setDesc(t("settings.reset.desc"))
       .addButton((b) =>
@@ -583,46 +429,6 @@ class DenseReadingSettingTab extends PluginSettingTab {
     repo.setAttr("rel", "noopener");
 
     renderSponsor(wrap, t);
-  }
-
-  /* Map the actual line widths to a scale that makes the differences visually
-     apparent on the settings page.
-
-     The actual line widths range from 44rem to 96rem—all exceeding the
-     width of the settings page itself; simply filling the available space
-     would result in no discernible difference between the settings.  Here,
-     the values ​​are normalized against 44rem: the narrowest setting
-     occupies 55% of the width, the widest occupies 100%, and intermediate
-     values ​​are determined via linear interpolation.  Consequently,
-     the difference between w44 and w78 (a shift from 44 to 78, or roughly
-     1.8x) is represented in the preview as a change from 55% to 81%, making
-     the distinction immediately obvious; note that this is a **proportional
-     representation**, not a pixel-perfect scale model.
-   */
-  updatePreview() {
-    if (!this.sampleEl) return;
-    const MIN_REM = 44;
-    const MAX_REM = 96;
-    const preset = PRESETS.find((x) => x.id === this.plugin.settings.widthPreset);
-    const rem =
-      preset && preset.rem !== null ? preset.rem : this.plugin.settings.customWidth;
-
-    const t = Math.max(0, Math.min(1, (rem - MIN_REM) / (MAX_REM - MIN_REM)));
-    const pct = 55 + t * 45; // 55% – 100%
-
-    this.sampleEl.style.maxWidth = pct.toFixed(1) + "%";
-    this.sampleEl.style.margin = "0 auto";
-    if (this.barEl) this.barEl.style.width = pct.toFixed(1) + "%";
-    if (this.readoutEl) {
-      const label = preset && preset.rem !== null ? preset.id : "custom";
-      this.readoutEl.setText(
-        this.plugin.i18n.t("settings.preview.readout", {
-          preset: label,
-          rem: String(rem),
-          px: String(Math.round(rem * 16)),
-        })
-      );
-    }
   }
 }
 
