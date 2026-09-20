@@ -308,8 +308,6 @@ const DEFAULT_SETTINGS = {
   /* The number of rem to customize the scale (36–96, consistent with the
      clip's slider range).  */
   customWidth: 54,
-  /* Tier coverage for each note: { "path/to/note.md": "w66" }.  */
-  perNote: {},
   /* Interface language: auto / zh / en (see i18n.js).  */
   language: "auto",
 };
@@ -557,7 +555,6 @@ class DenseReadingSettingTab extends PluginSettingTab {
           // interface to English for Chinese users.
           const keepLang = this.plugin.settings.language;
           this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS, {
-            perNote: {},
             language: keepLang,
           });
           await this.plugin.saveSettings();
