@@ -1,3 +1,8 @@
+# To do
+
+Change dense mode to paragraph spacing.
+
+
 # Done
 
 Remove pinning:
