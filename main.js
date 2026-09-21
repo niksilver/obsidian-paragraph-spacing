@@ -93,7 +93,6 @@ const OWN = {
       "Dense reading: tighter spacing plus an adjustable line width, with no Style Settings or CSS snippet required.",
 
     "command.toggle": "Toggle dense reading",
-    "command.cycle": "Cycle line-width preset",
 
     "notice.mode.on": "Dense reading: on",
     "notice.mode.off": "Dense reading: off",
