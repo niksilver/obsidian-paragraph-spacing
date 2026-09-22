@@ -258,7 +258,7 @@ const MODE_CLASS = "dense-reading-mode";
 const DEFAULT_SETTINGS = {
   /* Master switch: Compact line spacing for Reading View. Independent of
      line width; adheres to the semantic meaning of the segment.  */
-  denseMode: false,
+  denseMode: true,
   /* Interface language: auto / zh / en (see i18n.js).  */
   language: "auto",
 };
