@@ -20,14 +20,6 @@
    does not alter the editing structure of Live Preview)
    ------------------------------------------------------------ */
 
-/* Inline code: Matches text color, with a background at 5% opacity
-   (excluding `code` elements within code blocks). */
-body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) :not(pre) > code {
-  background-color: color-mix(in srgb, currentColor 5%, transparent);
-  padding: 0.08em 0.28em;
-  border-radius: 4px;
-}
-
 /* ------------------------------------------------------------
    Live Preview: Adjusts only the line height of `.cm-line`; does not alter
    structure, spacing, or margins.  (If the editing feel seems off, simply
