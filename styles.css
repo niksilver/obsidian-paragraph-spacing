@@ -33,9 +33,15 @@ body.dense-reading-mode :is(.markdown-preview-view, .markdown-rendered) :not(pre
    structure, spacing, or margins.  (If the editing feel seems off, simply
    delete this block; other functions remain unaffected.)
    ------------------------------------------------------------ */
-body.dense-reading-mode .markdown-source-view.mod-cm6 .cm-line {
-  line-height: 1.35;
-  padding: 0.35rem;
+body.dense-reading-mode .markdown-source-view.mod-cm6 {
+  .cm-line {
+    line-height: 1.35;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+  }
+  .cm-line.HyperMD-header {  /* Overrides plain cm-line */
+    padding-top: 0.70rem;
+  }
 }
 
 /* ------------------------------------------------------------
