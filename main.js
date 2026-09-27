@@ -59,7 +59,7 @@ const COMMON = {
       'Language for this settings page, commands and notices. "Follow Obsidian" tracks the app language.',
     "thanks.title": "Thanks",
     "thanks.body":
-      "With thanks to yunmin31, whose Dense Reading plugin this is adapted from.",
+      "With thanks to yunmin311, whose Dense Reading plugin this is adapted from.",
     "meta.version": "Version",
     "meta.repository": "Repository",
   },
@@ -199,7 +199,7 @@ function bindI18n(plugin) {
  */
 
 const THANKS = [
-  { label: "yunmin31 on GitHub", url: "https://github.com/yunmin311/" },
+  { label: "yunmin311 on GitHub", url: "https://github.com/yunmin311/" },
 ];
 
 function linkRow(parent, label, url) {
