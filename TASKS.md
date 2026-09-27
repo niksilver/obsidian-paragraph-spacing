@@ -1,12 +1,15 @@
 # To do
 
-Remove note that 'Spacing applies...".
+Remove dense spacing toggle.
 Change dense mode to paragraph spacing.
-Replace sponsorship with thanks.
 Tidy comments.
 
 
 # Done
+
+Replace sponsorship with thanks.
+
+Remove note that 'Spacing applies...".
 
 Remove 'Restore defaults'.
 - Remove 'common.reset.*' settings.

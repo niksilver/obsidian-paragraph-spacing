@@ -43,29 +43,11 @@
 const { Plugin, PluginSettingTab, Setting, Notice } = require("obsidian");
 
 
-/* ============================================================
-   [Inline Module · Automatically generated; please do not manually edit this section]
-   ------------------------------------------------------------
-   The following three sections originate from `locales.js`, `i18n.js`,
-   and `sponsor.js` in the repository, and are concatenated here by the
-   `bundle-inline.js` script (located in `_scratch/_i18n/`).
-
-   Why not simply use `require("./locales")`?  The `require` function injected
-   by Obsidian is restricted to a whitelist—recognizing only `obsidian`,
-   `@codemirror`, `@lezer`, and Electron's `window.require`—and **does not
-   resolve relative paths** within the plugin.  Consequently, `require("./x")`
-   would return `undefined`, causing the plugin to fail to load.
-
-   Workflow for changes: Modify source files → run `node bundle-inline.js
-   <plugin-directory>` → run `sync-plugins.ps1`.
-
-   ============================================================ */
-
 /* ---------- locales.js ---------- */
 /* Dense Reading —— Interface string table.
 
    Include only the keys specific to this plugin; the language dropdown,
-   sponsorship section, and general buttons are provided by the common table.  */
+   thanks section, and general buttons are provided by the common table.  */
 
 /* Shared keys — These are identical across all four plugins; please
    synchronize any changes across all of them (there is a similar note in `i18n.js`).*/
@@ -75,9 +57,9 @@ const COMMON = {
     "settings.language.name": "Interface language",
     "settings.language.desc":
       'Language for this settings page, commands and notices. "Follow Obsidian" tracks the app language.',
-    "sponsor.title": "Sponsorship",
-    "sponsor.body":
-      "These plugins are built independently and released free and open-source, with no commercial tie-in. If one of them saves you time, you can support ongoing maintenance via GitHub Sponsors.",
+    "thanks.title": "Thanks",
+    "thanks.body":
+      "With thanks to yunmin31, whose Dense Reading plugin this is adapted from.",
     "meta.version": "Version",
     "meta.repository": "Repository",
   },
@@ -200,9 +182,8 @@ function bindI18n(plugin) {
   return plugin.i18n;
 }
 
-/* ---------- sponsor.js ---------- */
 /* 
-   Sponsorship block.
+   Thanks block.
 
    Deliberately designed as a standalone section rather than being buried in
    the descriptive text: the settings page is the only place users actually
@@ -211,20 +192,14 @@ function bindI18n(plugin) {
    must maintain zero network requests to avoid scrutiny during the community
    marketplace review process.
 
-   Why is there only a single GitHub Sponsors entry?  Initially, domestic
-   and international options (Aifadian + Ko-fi) were listed separately,
-   but qy decided to consolidate everything under GitHub— a single entry
-   point simplifies maintenance and avoids including multiple platforms that
-   might break or require real-name verification.
-
-   Retaining the `SPONSORS` array structure (instead of flattening it into
+   Retaining the `THANKS` array structure (instead of flattening it into
    a single string) ensures that if a second entry needs to be added in
    the future, only the data requires modification, leaving the rendering
    code untouched.
  */
 
-const SPONSORS = [
-  { label: "GitHub Sponsors", url: "https://github.com/sponsors/yunmin311" },
+const THANKS = [
+  { label: "yunmin31 on GitHub", url: "https://github.com/yunmin311/" },
 ];
 
 function linkRow(parent, label, url) {
@@ -233,15 +208,15 @@ function linkRow(parent, label, url) {
   a.setAttr("rel", "noopener");
 }
 
-/** Render the sponsorship block within the parent component.
+/** Render the thanks block within the parent component.
    `t` is the translation function for the current language. */
-function renderSponsor(parent, t) {
+function renderThanks(parent, t) {
   const box = parent.createDiv({ cls: "sp-box" });
-  box.createDiv({ cls: "sp-title", text: t("sponsor.title") });
-  box.createDiv({ cls: "sp-body", text: t("sponsor.body") });
+  box.createDiv({ cls: "sp-title", text: t("thanks.title") });
+  box.createDiv({ cls: "sp-body", text: t("thanks.body") });
 
   const row = box.createDiv({ cls: "sp-row" });
-  for (const l of SPONSORS) linkRow(row, l.label, l.url);
+  for (const l of THANKS) linkRow(row, l.label, l.url);
 }
 
 /* ======================== Inline module end ======================== */
@@ -382,8 +357,7 @@ class DenseReadingSettingTab extends PluginSettingTab {
     this.renderFooter(containerEl, t);
   }
 
-  /* Version + Repository + Sponsorship. All four plugins share the
-     same structure and copy.  */
+  /* Version + Repository + Thanks. */
   renderFooter(containerEl, t) {
     const wrap = containerEl.createDiv({ cls: "dr-about" });
 
@@ -392,12 +366,12 @@ class DenseReadingSettingTab extends PluginSettingTab {
     meta.createSpan({ cls: "dr-about-sep", text: "·" });
     const repo = meta.createEl("a", {
       text: this.plugin.manifest.id,
-      href: `https://github.com/yunmin311/${this.plugin.manifest.id}-obsidian`,
+      href: "https://github.com/niksilver/obsidian-paragraph-spacing",
     });
     repo.setAttr("target", "_blank");
     repo.setAttr("rel", "noopener");
 
-    renderSponsor(wrap, t);
+    renderThanks(wrap, t);
   }
 }
 

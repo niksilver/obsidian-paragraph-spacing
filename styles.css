@@ -71,13 +71,14 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 {
   opacity: 0.5;
 }
 
-/* ---- Sponsored Block ---- */
+/* ---- Thanks block ---- */
 
 .sp-box {
   margin-top: 1em;
   padding: 0.9em 1em;
   border-radius: 6px;
   background: var(--background-secondary);
+  font-size: var(--font-ui-smaller, 0.9em);
 }
 
 .sp-title {
@@ -90,13 +91,11 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 {
 .sp-body {
   margin-bottom: 0.7em;
   color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 0.9em);
   line-height: 1.55;
 }
 
-/* Single entry point (GitHub Sponsors). Consolidated into a
-  single line of links; no longer split between domestic and
-  overseas — see the comments at the top of sponsor.js.  */
+/* Single entry point (Thanks).  */
+
 .sp-row {
   display: flex;
   flex-wrap: wrap;
