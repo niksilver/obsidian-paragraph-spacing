@@ -1,9 +1,17 @@
 # To do
 
+Remove note that 'Spacing applies...".
 Change dense mode to paragraph spacing.
+Replace sponsorship with thanks.
+Tidy comments.
 
 
 # Done
+
+Remove 'Restore defaults'.
+- Remove 'common.reset.*' settings.
+- Remove 'common.clear'.
+- Remove new Setting(...).
 
 Remove pinning:
 - command.pin, command.unpin

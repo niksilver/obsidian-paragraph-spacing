@@ -80,9 +80,6 @@ const COMMON = {
       "These plugins are built independently and released free and open-source, with no commercial tie-in. If one of them saves you time, you can support ongoing maintenance via GitHub Sponsors.",
     "meta.version": "Version",
     "meta.repository": "Repository",
-    "common.reset": "Restore defaults",
-    "common.reset.done": "Settings restored to defaults",
-    "common.clear": "Clear",
   },
 };
 
@@ -386,26 +383,6 @@ class DenseReadingSettingTab extends PluginSettingTab {
       .addToggle((tg) =>
         tg.setValue(this.plugin.settings.denseMode).onChange((v) => {
           void this.plugin.setDenseMode(v);
-        })
-      );
-
-    new Setting(containerEl)
-      .setName(t("settings.reset.name"))
-      .setDesc(t("settings.reset.desc"))
-      .addButton((b) =>
-        b.setButtonText(t("common.reset")).onClick(async () => {
-          // The language setting is specific to "this page itself"
-          // and is intentionally preserved when reverting to defaults;
-          // otherwise, a single click on the button would switch the
-          // interface to English for Chinese users.
-          const keepLang = this.plugin.settings.language;
-          this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS, {
-            language: keepLang,
-          });
-          await this.plugin.saveSettings();
-          this.plugin.applyClasses();
-          new Notice(t("common.reset.done"));
-          this.display();
         })
       );
 
