@@ -94,9 +94,6 @@ const OWN = {
     "notice.mode.on": "Dense reading: on",
     "notice.mode.off": "Dense reading: off",
 
-    "settings.usage":
-      "Spacing applies at the view layer and while the switch is on.",
-
     "settings.mode.name": "Dense spacing",
     "settings.mode.desc":
       "Tightens paragraph and heading spacing in reading view.",
@@ -372,10 +369,6 @@ class DenseReadingSettingTab extends PluginSettingTab {
           }
         );
       });
-
-    containerEl.createDiv({ cls: "dr-usage" }, (el) => {
-      el.createEl("p", { text: t("settings.usage") });
-    });
 
     new Setting(containerEl)
       .setName(t("settings.mode.name"))

@@ -41,21 +41,6 @@ body.dense-reading-mode .markdown-source-view.mod-cm6 {
    apply only to this plugin's settings page)
    ------------------------------------------------------------ */
 
-.dr-usage {
-  margin: 0.5em 0 1.25em;
-  padding: 0.75em 1em;
-  border-left: 3px solid var(--interactive-accent, #7f6df2);
-  border-radius: 4px;
-  background: var(--background-secondary);
-}
-
-.dr-usage p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller, 0.9em);
-  line-height: 1.55;
-}
-
 /* ---- Footer: Version / Repository Information --- */
 
 .dr-about {
